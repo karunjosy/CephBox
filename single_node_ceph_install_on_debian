@@ -624,3 +624,90 @@ osd.0                             ip-172-31-51-235                    running (6
 prometheus.ip-172-31-51-235       ip-172-31-51-235  *:9095            running (8m)     11s ago   8m    43.1M        -  2.43.0   a07b618ecd1d  8d75545b0c4f  
 rgw.test.ip-172-31-51-235.hwzops  ip-172-31-51-235  *:80              running (13s)    11s ago  13s    73.5M        -  18.2.4   2bc0b0f4375d  6708d903a608  
 
+root@ip-172-31-51-235:~# radosgw-admin user create --uid="s3user" --display-name="S3 user" --email="s3user@example.com"
+{
+    "user_id": "s3user",
+    "display_name": "S3 user",
+    "email": "s3user@example.com",
+    "suspended": 0,
+    "max_buckets": 1000,
+    "subusers": [],
+    "keys": [
+        {
+            "user": "s3user",
+            "access_key": "EZSREAQ0C23ZO40B3I17",
+            "secret_key": "EUdx9yXxvfuMv8Z2iBiUPcuZShVqR83ZC0ve1QDL"
+        }
+    ],
+    "swift_keys": [],
+    "caps": [],
+    "op_mask": "read, write, delete",
+    "default_placement": "",
+    "default_storage_class": "",
+    "placement_tags": [],
+    "bucket_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "user_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "temp_url_keys": [],
+    "type": "rgw",
+    "mfa_ids": []
+}
+
+root@ip-172-31-51-235:~# s3cmd --configure 
+Enter new values or accept defaults in brackets with Enter.
+Refer to user manual for detailed description of all options.
+Access key and Secret key are your identifiers for Amazon S3. Leave them empty for using the env variables.
+Access Key: EZSREAQ0C23ZO40B3I17
+Secret Key: EUdx9yXxvfuMv8Z2iBiUPcuZShVqR83ZC0ve1QDL
+Default Region [US]: 
+Use "s3.amazonaws.com" for S3 Endpoint and not modify it to the target Amazon S3.
+S3 Endpoint [s3.amazonaws.com]: 172.31.51.235:80
+Use "%(bucket)s.s3.amazonaws.com" to the target Amazon S3. "%(bucket)s" and "%(location)s" vars can be used
+if the target S3 system supports dns based buckets.
+DNS-style bucket+hostname:port template for accessing a bucket [%(bucket)s.s3.amazonaws.com]: 172.31.51.235:80
+Encryption password is used to protect your files from reading
+by unauthorized persons while in transfer to S3
+Encryption password: 
+Path to GPG program [/usr/bin/gpg]: 
+When using secure HTTPS protocol all communication with Amazon S3
+servers is protected from 3rd party eavesdropping. This method is
+slower than plain HTTP, and can only be proxied with Python 2.7 or newer
+Use HTTPS protocol [Yes]: no
+On some networks all internet access must go through a HTTP proxy.
+Try setting it here if you can't connect to S3 directly
+HTTP Proxy server name: 
+New settings:
+  Access Key: EZSREAQ0C23ZO40B3I17
+  Secret Key: EUdx9yXxvfuMv8Z2iBiUPcuZShVqR83ZC0ve1QDL
+  Default Region: US
+  S3 Endpoint: 172.31.51.235:80
+  DNS-style bucket+hostname:port template for accessing a bucket: 172.31.51.235:80
+  Encryption password: 
+  Path to GPG program: /usr/bin/gpg
+  Use HTTPS protocol: False
+  HTTP Proxy server name: 
+  HTTP Proxy server port: 0
+Test access with supplied credentials? [Y/n] n
+
+Save settings? [y/N] y
+Configuration saved to '/root/.s3cfg'
+
+
+root@ip-172-31-51-235:~# s3cmd ls
+root@ip-172-31-51-235:~# s3cmd mb s3:///homebucket
+Bucket 's3://homebucket/' created
+
+
+root@ip-172-31-51-235:~# s3cmd ls
+2024-10-20 15:50  s3://homebucket
