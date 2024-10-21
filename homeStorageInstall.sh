@@ -43,7 +43,7 @@ function debin_prerequsites() {
 
 function debin_cephadm() {
   echo "configuring cephadm..."
-  curl --silent --remote-name --location $(cephadm_location) -O /sbin/cephadm
+  cd /sbin/ && curl -# --remote-name --location "${cephadm_location}"
   chmod u+x /sbin/cephadm
   /sbin/cephadm add-repo --version $(ceph_version)
 }
