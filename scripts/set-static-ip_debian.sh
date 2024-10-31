@@ -91,7 +91,7 @@ echo -ne "\n${CYAN}----------------------------${NOCOLOR}\n"
 ip addr show $INTERFACE
 echo -ne "\n${CYAN}----------------------------${NOCOLOR}\n"
 echo -ne "\n${GREEN}Taken the network configuration backup as - /etc/network/interfaces.bak-${date_var}\n"
-echo -ne "\n${GREEN}If you need any additional configuration, feel free to modify using the config file - /etc/network/interfaces\n"
+echo -ne "\n${GREEN}If you need any additional configuration, feel free to modify using the config file - /etc/network/interfaces\n ${NOCOLOR}"
 ;;
 
 *) echo "Invalid input"
