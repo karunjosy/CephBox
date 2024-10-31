@@ -24,8 +24,10 @@ BOLD="\033[1;33m"
 
 # Print info and fetch the details from the user
 echo -e "${GREEN} This script can be used to set the static ip address for debian..\n\n ${NOCOLOR}\n${CYAN}These are the available devices in this machine:${NOCOLOR}\n "
-echo -ne "\n${CYAN}-----------<Results>----------------${NOCOLOR}\n"
+echo -ne "\n${CYAN}-----------<Current IP and Interface details>----------------${NOCOLOR}\n"
 ip a || ifconfig
+echo -ne "\n${CYAN}-----------<Current routes>----------------${NOCOLOR}\n"
+ip r show
 echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
 
 # Variables
