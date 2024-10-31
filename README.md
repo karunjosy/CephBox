@@ -24,7 +24,7 @@ Repository for backend api
 
 - **Customization**
 
-The below variables /  can be done on the script:
+The below variables can be customize from the script based on the needs:
 ~~~
 cephadm_location="https://download.ceph.com/rpm-reef/el9/noarch/cephadm"
 ceph_version="18.2.4"
