@@ -53,7 +53,7 @@ echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
 echo -ne "\n${GREEN}Confirm whether the above details are correct(${BLINKING}${RED}yes/no${NOCOLOR}): "
 read condition1
 
-echo -ne "\n${BLUE}Configuring the Static IP - $IP_ADDRESS on the interface $INTERFACE ${NOCOLOR}) "
+echo -ne "\n${BLUE}Configuring the Static IP - $IP_ADDRESS on the interface $INTERFACE ${NOCOLOR} "
 
 # Check the confirmation and proceed further
 case $condition1 in
@@ -88,8 +88,8 @@ EOF
 systemctl restart networking
 
 # Display the new network configuration
-echo -ne "\n${CYAN}Configured the Static IP - $IP_ADDRESS on the interface $INTERFACE ${NOCOLOR}) "
-echo -ne "\n${YELLOW}These are the IP details:${NOCOLOR}\n"
+echo -ne "\n\n${CYAN}Configured the Static IP - $IP_ADDRESS on the interface $INTERFACE ${NOCOLOR} "
+echo -ne "\n\n${YELLOW}These are the IP details:${NOCOLOR}\n"
 echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
 ip addr show $INTERFACE
 echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
