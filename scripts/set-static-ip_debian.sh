@@ -14,7 +14,6 @@ then
 fi
 
 
-# Declare clour variables
 GREEN='\033[0;32m'
 RED="\033[0;31m"
 YELLOW="\033[1;33m"
@@ -23,10 +22,11 @@ BLUE="\033[0;34m"
 NOCOLOR="\033[0m"
 BOLD="\033[1;33m"
 
-
 # Print info and fetch the details from the user
 echo -e "${GREEN} This script can be used to set the static ip address for debian..\n\n ${NOCOLOR}\n${CYAN}These are the available devices in this machine:${NOCOLOR}\n "
+echo -ne "\n${CYAN}-----------<Results>----------------${NOCOLOR}\n"
 ip a || ifconfig
+echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
 
 # Variables
 echo -ne "${GREEN}Review the above result before choosing the device name and choose the network interface which you want to set the static IP(eg: "enp1s0"):${NOCOLOR} "
@@ -39,19 +39,21 @@ echo -ne "${GREEN}Enter the gateway:${NOCOLOR} "
 read GATEWAY
 echo -ne "${GREEN}Enter the DNS1:${NOCOLOR} "
 read DNS1
+# Adding google DNS to resolve from internet - in case if local DNS is not working
 DNS2="8.8.4.4"
 
 # Confirmation
-echo -ne "\n
-${CYAN}-----------<Details>----------------${NOCOLOR}\n"
+echo -ne "\n${CYAN}-----------<Details>----------------${NOCOLOR}\n"
 echo -ne "\n${GREEN}Interface detail: ${BLINKING}${RED}$INTERFACE ${NOCOLOR}"
 echo -ne "\n${GREEN}IPAddress: ${BLINKING}${RED}$IP_ADDRESS ${NOCOLOR}"
 echo -ne "\n${GREEN}Netmask: ${BLINKING}${RED}$NETMASK ${NOCOLOR}"
 echo -ne "\n${GREEN}Gateway: ${BLINKING}${RED}$GATEWAY ${NOCOLOR}"
 echo -ne "\n${GREEN}DNS infomation:\n  ${BLINKING}${RED}- DNS1: $DNS1 \n  - DNS2: $DNS2 ${NOCOLOR}"
-echo -ne "\n${CYAN}----------------------------${NOCOLOR}\n"
-echo -ne "${GREEN}Confirm whether the above details are correct(${BLINKING}${RED}yes/no${NOCOLOR}): "
+echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
+echo -ne "\n${GREEN}Confirm whether the above details are correct(${BLINKING}${RED}yes/no${NOCOLOR}): "
 read condition1
+
+echo -ne "\n${BLUE}Configuring the Static IP - $IP_ADDRESS on the interface $INTERFACE ${NOCOLOR}) "
 
 # Check the confirmation and proceed further
 case $condition1 in
@@ -86,12 +88,13 @@ EOF
 systemctl restart networking
 
 # Display the new network configuration
-echo -ne "\n${YELLOW}IP details:${NOCOLOR}\n"
-echo -ne "\n${CYAN}----------------------------${NOCOLOR}\n"
+echo -ne "\n${CYAN}Configured the Static IP - $IP_ADDRESS on the interface $INTERFACE ${NOCOLOR}) "
+echo -ne "\n${YELLOW}These are the IP details:${NOCOLOR}\n"
+echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
 ip addr show $INTERFACE
-echo -ne "\n${CYAN}----------------------------${NOCOLOR}\n"
+echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
 echo -ne "\n${GREEN}Taken the network configuration backup as - /etc/network/interfaces.bak-${date_var}\n"
-echo -ne "\n${GREEN}If you need any additional configuration, feel free to modify using the config file - /etc/network/interfaces\n ${NOCOLOR}"
+echo -ne "\n${GREEN}If you need any additional configuration, feel free to modify using the config file - /etc/network/interfaces\n${NOCOLOR}"
 ;;
 
 *) echo "Invalid input"
