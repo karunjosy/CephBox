@@ -54,42 +54,43 @@ function singleHostDeployment() {
   cephadm --image "${container_image}" bootstrap --mon-ip "${get_pvt_ipaddress}"  --single-host-defaults | tee /root/ceph_install.out
   cephadm shell -- ceph status
   sleep 60
+  echo "export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/usr/local/sbin:/usr/local/bin" >> ~/.bashrc
   cephadm install ceph-common
   echo "Started OSD deployment..."
-  ceph orch apply osd --all-available-devices
+  cephadm shell -- ceph orch apply osd --all-available-devices
   sleep 60
   cephadm shell -- ceph orch ps --daemon_type osd
-  ceph config set global mon_allow_pool_delete true
-  ceph config set global osd_pool_default_min_size 1
-  ceph config set global osd_pool_default_size 1
+  cephadm shell -- ceph config set global mon_allow_pool_delete true
+  cephadm shell -- ceph config set global osd_pool_default_min_size 1
+  cephadm shell -- ceph config set global osd_pool_default_size 1
 }
 
 function rgwPrerequsites() {
   echo "Configuring realm..."
-  radosgw-admin realm create --rgw-realm="${realm_name}" --default
+  cephadm shell -- radosgw-admin realm create --rgw-realm="${realm_name}" --default
   echo "Configuring zonegroup..."
-  radosgw-admin zonegroup create --rgw-zonegroup="${zonegroup_name}" --master --default
+  cephadm shell -- radosgw-admin zonegroup create --rgw-zonegroup="${zonegroup_name}" --master --default
   echo "Configuring zone..."
-  radosgw-admin zone create --rgw-zonegroup="${zonegroup_name}" --rgw-zone="${zone_name}" --master --default
+  cephadm shell -- radosgw-admin zone create --rgw-zonegroup="${zonegroup_name}" --rgw-zone="${zone_name}" --master --default
   echo "Performing period update..."
-  radosgw-admin period update --rgw-realm="${realm_name}" --commit
+  cephadm shell -- radosgw-admin period update --rgw-realm="${realm_name}" --commit
 }
 
 function rgwDeployment() {
   echo "Deploying rgw..."
-  ceph orch apply rgw myhomergw --realm="${realm_name}" --zone="${zone_name}" --placement="1 $(rgw_placement)"
+  cephadm shell -- ceph orch apply rgw myhomergw --realm="${realm_name}" --zone="${zone_name}" --placement="1 $(rgw_placement)"
 }
 
 function rgwUser() {
   echo "Creating rgw user..."
-  radosgw-admin user create --uid="${rgw_user}" --display-name="S3 user" --email="s3user@example.com"
+  cephadm shell -- radosgw-admin user create --uid="${rgw_user}" --display-name="S3 user" --email="s3user@example.com"
 }
 function gets3User() {
   echo "Details to configure s3cmd/aws cli/any other s3 client..."
   apt update
   apt install -y s3cmd jq
-  ACCESS_KEY=`radosgw-admin user info --uid="${rgw_user}" | jq  -r '.keys[0].access_key'`
-  SECRET_KEY=`radosgw-admin user info --uid="${rgw_user}" | jq  -r '.keys[0].secret_key'`
+  ACCESS_KEY=`cephadm shell -- radosgw-admin user info --uid="${rgw_user}" | jq  -r '.keys[0].access_key'`
+  SECRET_KEY=`cephadm shell -- radosgw-admin user info --uid="${rgw_user}" | jq  -r '.keys[0].secret_key'`
   ENDPOINT="${get_pvt_ipaddress}":80
   echo "Access Key: $ACCESS_KEY"
   echo "Secret Key: $SECRET_KEY"
