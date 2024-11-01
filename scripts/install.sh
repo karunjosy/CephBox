@@ -38,7 +38,7 @@ function debin_update() {
 function debin_prerequsites() {
   echo "Installing podman, lvm2, chrony..."
   sudo apt update
-  sudo apt install -y lvm2 podman chrony
+  sudo apt install -y lvm2 podman chrony sudo 
 }
 
 function debin_cephadm() {
@@ -46,6 +46,8 @@ function debin_cephadm() {
   cd /sbin/ && curl -# --remote-name --location "${cephadm_location}"
   chmod +x /sbin/cephadm
   /sbin/cephadm add-repo --version "${ceph_version}"
+  echo "export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/usr/local/sbin:/usr/local/bin" >> ~/.bashrc
+  source ~/.bashrc
 }
 
 function singleHostDeployment() {
@@ -53,10 +55,8 @@ function singleHostDeployment() {
   podman pull "${container_image}"
   cephadm --image "${container_image}" bootstrap --mon-ip "${get_pvt_ipaddress}"  --single-host-defaults | tee /root/ceph_install.out
   cephadm shell -- ceph status
-  sleep 60
-  echo "export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/usr/local/sbin:/usr/local/bin" >> ~/.bashrc
-  cephadm install ceph-common
-  echo "Started OSD deployment..."
+  echo "Started OSD deployment, it may take some time..."
+  sleep 30
   cephadm shell -- ceph orch apply osd --all-available-devices
   sleep 60
   cephadm shell -- ceph orch ps --daemon_type osd
