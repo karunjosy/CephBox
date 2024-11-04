@@ -53,7 +53,7 @@ function debin_cephadm() {
 function singleHostDeployment() {
   echo "cephadm deployment is going on..."
   podman pull "${container_image}"
-  cephadm --image "${container_image}" bootstrap --mon-ip "${get_pvt_ipaddress}"  --single-host-defaults | tee /root/ceph_install.out
+  cephadm --image "${container_image}" bootstrap --mon-ip "${get_pvt_ipaddress}" --initial-dashboard-user admin --initial-dashboard-password admin --single-host-defaults | tee /root/ceph_install.out
   cephadm shell -- ceph status
   echo "Started OSD deployment, it may take some time..."
   sleep 30
