@@ -10,9 +10,9 @@ then
 fi
 
 #Declare variables
-cephadm_location="https://download.ceph.com/rpm-reef/el9/noarch/cephadm"
-ceph_version="18.2.4"
-container_image="quay.io/ceph/ceph:v18.2.4"
+cephadm_location="https://download.ceph.com/rpm-squid/el9/noarch/cephadm"
+ceph_version="19.2.0"
+container_image="quay.io/ceph/ceph:v19.2.0"
 get_pvt_ipaddress=`hostname -I | awk '{print $1}'`
 get_public_ipaddress=`curl -s https://icanhazip.com`
 realm_name=test_realm
@@ -59,6 +59,8 @@ function singleHostDeployment() {
   sleep 30
   cephadm shell -- ceph orch apply osd --all-available-devices
   sleep 60
+  ceph config set mgr mgr/cephadm/container_image_grafana quay.io/ceph/ceph-grafana:9.4.12
+  ceph mgr fail
   cephadm shell -- ceph orch ps --daemon_type osd
   cephadm shell -- ceph config set global mon_allow_pool_delete true
   cephadm shell -- ceph config set global osd_pool_default_min_size 1
