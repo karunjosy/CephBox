@@ -58,9 +58,8 @@ function singleHostDeployment() {
   echo "Started OSD deployment, it may take some time..."
   sleep 30
   cephadm shell -- ceph orch apply osd --all-available-devices
-  sleep 60
+  sleep 30
   cephadm shell -- ceph config set mgr mgr/cephadm/container_image_grafana quay.io/ceph/ceph-grafana:9.4.12
-  cephadm shell -- ceph health mute POOL_NO_REDUNDANCY
   cephadm shell -- ceph mgr fail
   cephadm shell -- ceph orch ps --daemon_type osd
   cephadm shell -- ceph config set global mon_allow_pool_delete true
@@ -87,6 +86,8 @@ function rgwDeployment() {
 function rgwUser() {
   echo "Creating rgw user..."
   cephadm shell -- radosgw-admin user create --uid="${rgw_user}" --display-name="S3 user" --email="s3user@example.com"
+  cephadm shell -- ceph health mute POOL_NO_REDUNDANCY
+  cephadm shell -- ceph mgr fail
 }
 function gets3User() {
   echo "Details to configure s3cmd/aws cli/any other s3 client..."
@@ -99,6 +100,7 @@ function gets3User() {
   echo "Secret Key: $SECRET_KEY"
   echo "Endpoint Details(from the node): $ENDPOINT"
   echo "Feel free to configure your fevorate s3 client.."
+  cephadm shell -- ceph mgr fail
 #  s3cmd mb s3:///homebucket
 }
 
