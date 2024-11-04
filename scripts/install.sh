@@ -59,8 +59,9 @@ function singleHostDeployment() {
   sleep 30
   cephadm shell -- ceph orch apply osd --all-available-devices
   sleep 60
-  ceph config set mgr mgr/cephadm/container_image_grafana quay.io/ceph/ceph-grafana:9.4.12
-  ceph mgr fail
+  cephadm shell -- ceph config set mgr mgr/cephadm/container_image_grafana quay.io/ceph/ceph-grafana:9.4.12
+  cephadm shell -- ceph health mute POOL_NO_REDUNDANCY
+  cephadm shell -- ceph mgr fail
   cephadm shell -- ceph orch ps --daemon_type osd
   cephadm shell -- ceph config set global mon_allow_pool_delete true
   cephadm shell -- ceph config set global osd_pool_default_min_size 1
