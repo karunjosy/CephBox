@@ -34,6 +34,8 @@ zonegroup_name=default
 zone_name=test_zone
 rgw_placement=`hostname -s`
 rgw_user=s3user
+dashboard_user=admin
+dashboard_password=admin
 
 ### Define functions
 # Adding condition to check whether the cluster is already installed or not
@@ -100,7 +102,7 @@ function debin_cephadm() {
 function singleHostDeployment() {
   echo -e "${GREEN}cephadm deployment is going on...${NOCOLOR}\n"
   podman pull "${container_image}"
-  cephadm --image "${container_image}" bootstrap --mon-ip "${get_pvt_ipaddress}"  --single-host-defaults | tee /root/ceph_install.out
+  cephadm --image "${container_image}" bootstrap --mon-ip "${get_pvt_ipaddress}" --initial-dashboard-user "${dashboard_user}" --initial-dashboard-password "${dashboard_password}" --single-host-defaults | tee /root/ceph_install.out
   cephadm shell -- ceph status
   echo -e "${GREEN}Started OSD deployment, it may take some time...${NOCOLOR}\n"
   sleep 30
