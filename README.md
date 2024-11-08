@@ -20,20 +20,33 @@ Repository for backend api
   
   ii.  Give execute permission: `chmod +x install.sh`
 
-  iii. Run the script and follow the instructions: `bash install.sh`
+  iii. Run the command - `bash install.sh` to setup basic ceph enviroment.
+  iv.  Run the command - `bash install.sh rgw` to setup the rgw enviroment.
 
 - **Customization**
 
 The below variables can be customize from the script based on the needs:
 ~~~
-cephadm_location="https://download.ceph.com/rpm-reef/el9/noarch/cephadm"
-ceph_version="18.2.4"
-container_image="quay.io/ceph/ceph:v18.2.4"
+cephadm_location="https://download.ceph.com/rpm-squid/el9/noarch/cephadm"
+ceph_version="19.2.0"
+container_image="quay.io/ceph/ceph:v19.2.0"
+grafana_image="quay.io/ceph/ceph-grafana:9.4.12"
 get_pvt_ipaddress=`hostname -I | awk '{print $1}'`
-get_public_ipaddress=`curl -s https://icanhazip.com`
+#get_public_ipaddress=`curl -s https://icanhazip.com`
 realm_name=test_realm
 zonegroup_name=default
 zone_name=test_zone
 rgw_placement=`hostname -s`
 rgw_user=s3user
+~~~
+
+- Additional options whithin the script
+~~~
+# bash install.sh --help
+
+The avaliable options are:
+   rgw - This is to deploy rgw/s3 on this machine.
+   enteapp - This is to integrate ente app
+   purge - This is to purge/delete the cluster.
+   bash install.sh - Use the script without any option for default installation...
 ~~~
