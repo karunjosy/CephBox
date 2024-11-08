@@ -186,6 +186,83 @@ function cephpurgenode() {
 
 }
 
+# To set the static ip
+function staticipset() {
+   # Print info and fetch the details from the user
+   echo -e "${GREEN} This script can be used to set the static ip address for debian..\n\n ${NOCOLOR}\n${CYAN}These are the available devices in this machine:${NOCOLOR}\n "
+   echo -ne "\n${CYAN}-----------<Current IP and Interface details>----------------${NOCOLOR}\n"
+   ip a || ifconfig
+   echo -ne "\n${CYAN}-----------<Current routes>----------------${NOCOLOR}\n"
+   ip r show
+   echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
+   # Variables
+   echo -ne "${GREEN}Review the above result before choosing the device name and choose the network interface which you want to set the static IP(eg: "enp1s0"):${NOCOLOR} "
+   read INTERFACE
+   echo -ne "${GREEN}Enter the IP address:${NOCOLOR} "
+   read IP_ADDRESS
+   echo -ne "${GREEN}Enter the netmask:${NOCOLOR} "
+   read NETMASK
+   echo -ne "${GREEN}Enter the gateway:${NOCOLOR} "
+   read GATEWAY
+   echo -ne "${GREEN}Enter the DNS1:${NOCOLOR} "
+   read DNS1
+   # Adding google DNS to resolve from internet - in case if local DNS is not working
+   DNS2="8.8.4.4"
+  # Confirmation
+   echo -ne "\n${CYAN}-----------<Details>----------------${NOCOLOR}\n"
+   echo -ne "\n${GREEN}Interface detail: ${BLINKING}${RED}$INTERFACE ${NOCOLOR}"
+   echo -ne "\n${GREEN}IPAddress: ${BLINKING}${RED}$IP_ADDRESS ${NOCOLOR}"
+   echo -ne "\n${GREEN}Netmask: ${BLINKING}${RED}$NETMASK ${NOCOLOR}"
+   echo -ne "\n${GREEN}Gateway: ${BLINKING}${RED}$GATEWAY ${NOCOLOR}"
+   echo -ne "\n${GREEN}DNS infomation:\n  ${BLINKING}${RED}- DNS1: $DNS1 \n  - DNS2: $DNS2 ${NOCOLOR}"
+   echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
+   echo -ne "\n${GREEN}Confirm whether the above details are correct(${BLINKING}${RED}yes/no${NOCOLOR}): "
+   read condition1
+   echo -ne "\n${BLUE}Configuring the Static IP - $IP_ADDRESS on the interface $INTERFACE ${NOCOLOR} "
+   # Check the confirmation and proceed further
+   case $condition1 in
+   [yY][Ee][Ss])
+   # Backup the current interfaces file
+   date_var=`date "+%Y-%m-%d-%T"`
+   cp /etc/network/interfaces /etc/network/interfaces.bak-${date_var}
+   # Configure the network interface
+   > /etc/network/interfaces
+cat <<EOF >> /etc/network/interfaces
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+
+# The primary network interface
+iface lo inet loopback
+auto $INTERFACE
+iface $INTERFACE inet static
+address $IP_ADDRESS
+netmask $NETMASK
+gateway $GATEWAY
+dns-nameservers $DNS1 $DNS2
+EOF
+
+   # Restart the networking service to apply changes
+   systemctl restart networking
+   # Display the new network configuration
+   echo -ne "\n\n${CYAN}Configured the Static IP - $IP_ADDRESS on the interface $INTERFACE ${NOCOLOR} "
+   echo -ne "\n\n${YELLOW}These are the IP details:${NOCOLOR}\n"
+   echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
+   ip addr show $INTERFACE
+   echo -ne "\n${CYAN}------------------------------------${NOCOLOR}\n"
+   echo -ne "\n${GREEN}Taken the network configuration backup as - /etc/network/interfaces.bak-${date_var}\n"
+   echo -ne "\n${GREEN}If you need any additional configuration, feel free to modify using the config file - /etc/network/interfaces\n${NOCOLOR}"
+   ;;
+
+   *) echo "Invalid input"
+            ;;
+   esac
+}
+
 if [[ $# -eq 0 ]] ; then
   echo -e "\n${GREEN}Entering to the default installation mode...${NOCOLOR}"
   freeavailabledisk || exit 1
@@ -202,6 +279,8 @@ if [[ $# -eq 0 ]] ; then
   fi
 else
 case "$1" in
+  staticip)
+  staticipset ;;
   rgw)
      echo -e "\n${GREEN}Deploying RGW/S3 on this node..${NOCOLOR}"
       rgwPrerequsites
@@ -218,7 +297,7 @@ case "$1" in
      freeavailabledisk 
           ;;
   *)
-     echo -e "\n${GREEN}The avaliable options are: \n   ${YELLOW}"rgw"${NOCOLOR} - This is to deploy rgw/s3 on this machine.\n   ${YELLOW}"enteapp"${NOCOLOR} - This is to integrate ente app \n   ${YELLOW}"purge"${NOCOLOR} - This is to purge/delete the cluster.\n   ${YELLOW}bash install.sh${NOCOLOR} - Use the script without any option for default installation..." ;;
+     echo -e "\n${GREEN}The avaliable options are: \n   ${YELLOW}bash install.sh${NOCOLOR} - Run the script without any argument is for default ceph installation without rgw/s3.\n   ${YELLOW}"rgw"${NOCOLOR} - This argument is to deploy rgw/s3 on this machine.\n   ${YELLOW}"enteapp"${NOCOLOR} - This argument is to integrate with ente app.\n   ${YELLOW}"purge"${NOCOLOR} - This argument is to purge/delete the cluster.\n   ${YELLOW}"staticip"${NOCOLOR} - This argument is to set the static ip address to the machine.\n   ${YELLOW}"diskcheck"${NOCOLOR} - This argument is to check whether any free disks(without partition or filesystem) are available on this machine." ;;
 esac
 
 fi

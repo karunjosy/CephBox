@@ -15,13 +15,13 @@ Repository for backend api
   d. Root access.
 
 - **Steps**:
-- 
-  i.   Download the script - `scripts/install.sh` to the home directory of the `root` user - `/root`.
+ 
+  i. Login as root user and clone repository using the command `git clone https://github.com/karunjosy/CephDrive.git` to the home directory of the `root` user - `/root`.
   
-  ii.  Give execute permission: `chmod +x install.sh`
+  ii.  Go inside the directory `CephDrive/scripts`(`cd CephDrive/scripts`) and give execute permission: `chmod +x install.sh`
 
-  iii. Run the command - `bash install.sh` to setup basic ceph enviroment.
-  iv.  Run the command - `bash install.sh rgw` to setup the rgw enviroment.
+  iii. Run the command - `bash install.sh` to setup basic ceph enviroment without s3 endpoint.
+  iv.  Run the command - `bash install.sh rgw` to setup the rgw/s3 enviroment.
 
 - **Customization**
 
@@ -46,8 +46,10 @@ dashboard_password=admin
 # bash install.sh --help
 
 The avaliable options are:
-   rgw - This is to deploy rgw/s3 on this machine.
-   enteapp - This is to integrate ente app
-   purge - This is to purge/delete the cluster.
-   bash install.sh - Use the script without any option for default installation...
+   bash install.sh - Run the script without any argument is for default ceph installation without rgw/s3.
+   rgw - This argument is to deploy rgw/s3 on this machine.
+   enteapp - This argument is to integrate with ente app.
+   purge - This argument is to purge/delete the cluster.
+   staticip - This argument is to set the static ip address to the machine.
+   diskcheck - This argument is to check whether any free disks(without partition or filesystem) are available on this machine.
 ~~~
