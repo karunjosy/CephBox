@@ -102,7 +102,8 @@ function debin_cephadm() {
 function singleHostDeployment() {
   echo -e "${GREEN}cephadm deployment is going on...${NOCOLOR}\n"
   podman pull "${container_image}"
-  cephadm --image "${container_image}" bootstrap --mon-ip "${get_pvt_ipaddress}" --initial-dashboard-user "${dashboard_user}" --initial-dashboard-password "${dashboard_password}" --single-host-defaults | tee /root/ceph_install.out
+  date_var1=`date "+%Y-%m-%d-%T"`
+  cephadm --image "${container_image}" bootstrap --mon-ip "${get_pvt_ipaddress}" --initial-dashboard-user "${dashboard_user}" --initial-dashboard-password "${dashboard_password}" --single-host-defaults | tee /root/ceph_install.out-${date_var1}
   cephadm shell -- ceph status
   echo -e "${GREEN}Started OSD deployment, it may take some time...${NOCOLOR}\n"
   sleep 30
@@ -118,8 +119,21 @@ function singleHostDeployment() {
   cephadm shell -- ceph config set global osd_pool_default_min_size 1
   cephadm shell -- ceph config set global osd_pool_default_size 1
   echo -e "${GREEN}Deployment got completed...please review the below: ${NOCOLOR}\n"
+  cephadm shell -- ceph mgr fail
   cephadm shell -- ceph -s
   cephadm shell -- ceph orch ls
+  date_var2=`date "+%Y-%m-%d-%T"`
+  echo "Ceph Manager dashboard details: " > /root/ceph_mgr_install.out-${date_var2}
+  cephadm shell -- ceph mgr services >> /root/ceph_mgr_install.out-${date_var2}
+  echo "-------------------------------------" >> /root/ceph_mgr_install.out-${date_var2}
+  echo "Ceph Dashboard user details: " >> /root/ceph_mgr_install.out-${date_var2}
+  echo "User: $dashboard_user" >> /root/ceph_mgr_install.out-${date_var2}
+  echo "Credential: $dashboard_password" >> /root/ceph_mgr_install.out-${date_var2}
+  echo "-------------------------------------" >> /root/ceph_mgr_install.out-${date_var2}
+  echo "Ceph Initial Status: " >> /root/ceph_mgr_install.out-${date_var2}
+  cephadm shell -- ceph -s >> /root/ceph_mgr_install.out-${date_var2}
+  cephadm shell -- ceph orch host ls >> /root/ceph_mgr_install.out-${date_var2}
+  echo "-------------------------------------" >> /root/ceph_mgr_install.out-${date_var2}
 }
 
 # Pre-requesites for rgw - realm/zonegroup/zone..etc
@@ -148,15 +162,16 @@ function rgwUser() {
 
 # Fetching rgw user
 function gets3User() {
-  echo -e "${GREEN}Details to configure s3cmd/aws cli/any other s3 client...${NOCOLOR}\n"
+  date_var3=`date "+%Y-%m-%d-%T"`
+  echo -e "${GREEN}Details to configure s3cmd/aws cli/any other s3 client...${NOCOLOR}\n" | tee /root/ceph_install.out-${date_var3}
   apt update
   apt install -y s3cmd jq
   ACCESS_KEY=`cephadm shell -- radosgw-admin user info --uid="${rgw_user}" | jq  -r '.keys[0].access_key'`
   SECRET_KEY=`cephadm shell -- radosgw-admin user info --uid="${rgw_user}" | jq  -r '.keys[0].secret_key'`
   ENDPOINT="${get_pvt_ipaddress}":80
-  echo -e "${GREEN}Access Key:${NOCOLOR} $ACCESS_KEY"
-  echo -e "${GREEN}Secret Key:${NOCOLOR} $SECRET_KEY"
-  echo -e "${GREEN}Endpoint Details(from the node):${NOCOLOR} $ENDPOINT"
+  echo -e "${GREEN}Access Key:${NOCOLOR} $ACCESS_KEY" >> /root/ceph_install.out-${date_var3}
+  echo -e "${GREEN}Secret Key:${NOCOLOR} $SECRET_KEY" >> /root/ceph_install.out-${date_var3}
+  echo -e "${GREEN}Endpoint Details(from the node):${NOCOLOR} $ENDPOINT" >> /root/ceph_install.out-${date_var3}
   echo -e "${GREEN}Feel free to configure your fevorate s3 client..${NOCOLOR}\n"
 #  s3cmd mb s3:///homebucket
 }
