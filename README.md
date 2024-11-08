@@ -16,15 +16,15 @@ Repository for backend api
 
 - **Steps**:
 - 
-  i.   Download the script - `homeStorageInstall.sh` to the home directory of the root user - `/root`.
+  i.   Download the script - `scripts/install.sh` to the home directory of the `root` user - `/root`.
   
-  ii.  Give execute permission: `chmod +x homeStorageInstall.sh`
+  ii.  Give execute permission: `chmod +x install.sh`
 
-  iii. Run the script and follow the instructions: `bash homeStorageInstall.sh`
+  iii. Run the script and follow the instructions: `bash install.sh`
 
 - **Customization**
 
-The below variables /  can be done on the script:
+The below variables can be customize from the script based on the needs:
 ~~~
 cephadm_location="https://download.ceph.com/rpm-reef/el9/noarch/cephadm"
 ceph_version="18.2.4"
