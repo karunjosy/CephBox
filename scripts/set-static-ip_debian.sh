@@ -59,7 +59,7 @@ echo -ne "\n${BLUE}Configuring the Static IP - $IP_ADDRESS on the interface $INT
 
 # Check the confirmation and proceed further
 case $condition1 in
-[yY][Ee][Ss] )
+[yY][Ee][Ss])
 # Backup the current interfaces file
 date_var=`date "+%Y-%m-%d-%T"`
 cp /etc/network/interfaces /etc/network/interfaces.bak-${date_var}
