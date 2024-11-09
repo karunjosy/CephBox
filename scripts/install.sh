@@ -158,6 +158,8 @@ function rgwDeployment() {
 function rgwUser() {
   echo -e "${GREEN}Creating rgw user...${NOCOLOR}\n"
   cephadm shell -- radosgw-admin user create --uid="${rgw_user}" --display-name="S3 user" --email="s3user@example.com"
+  cephadm shell -- ceph health mute POOL_NO_REDUNDANCY
+  cephadm shell -- ceph mgr fail
 }
 
 # Fetching rgw user
@@ -173,6 +175,7 @@ function gets3User() {
   echo -e "${GREEN}Secret Key:${NOCOLOR} $SECRET_KEY" >> /root/ceph_install.out-${date_var3}
   echo -e "${GREEN}Endpoint Details(from the node):${NOCOLOR} $ENDPOINT" >> /root/ceph_install.out-${date_var3}
   echo -e "${GREEN}Feel free to configure your fevorate s3 client..${NOCOLOR}\n"
+  cephadm shell -- ceph mgr fail
 #  s3cmd mb s3:///homebucket
 }
 
