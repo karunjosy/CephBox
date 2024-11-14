@@ -13,15 +13,17 @@ We are in the process of automating the installation of different components as 
 
 **Prerequesites**:
   
-  a. Repository for backend debian_version: 12.7
+    a. Repository for backend debian_version: 12.7
   
-  b. Atleast one free disk
+    b. Atleast one free disk
   
-  c. Internet access to the node.
+    c. Internet access to the node.
   
-  d. Root access.
+    d. Root access.
 
 **Steps**:
+
+ *Option 1 : Using git clone*
  
   i. Login as root user and clone repository using the command `git clone https://github.com/karunjosy/CephDrive.git` to the home directory of the `root` user - `/root`.
   
@@ -29,6 +31,12 @@ We are in the process of automating the installation of different components as 
 
   iii. Run the command - `bash install.sh` to setup basic ceph enviroment without s3 endpoint.
   iv.  Run the command - `bash install.sh rgw` to setup the rgw/s3 enviroment.
+
+*Option 2 : Downloading the script*
+From the terminal run:
+  ```
+  curl -sSL https://raw.githubusercontent.com/karunjosy/CephBox/refs/heads/main/scripts/install.sh | bash
+  ```
 
 **Customization**
 
