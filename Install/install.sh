@@ -98,7 +98,7 @@ function debin_cephadm() {
   source ~/.bashrc
 }
 
-# debin install ceph using cephadm 
+# debin install ceph using cephadm
 function singleHostDeployment() {
   echo -e "${GREEN}cephadm deployment is going on...${NOCOLOR}\n"
   podman pull "${container_image}"
@@ -179,6 +179,61 @@ function gets3User() {
 #  s3cmd mb s3:///homebucket
 }
 
+function enteapp_install() {
+# Create directory
+
+read -p 'Enter RGW bucket name:' BUCKET_NAME
+read -p 'Enter Access Key:' ACCESS_KEY
+read -p 'Enter Secret Key:'  SECRET_KEY
+read -p 'Enter RGW Endpoint with  port (IP:Port) :' ENDPOINT
+
+echo -e "${YELLOW} Creating directory 'ente' ${NOCOLOR}"
+mkdir ente && cd ente
+
+# Copy the starter compose.yaml and its support files from the repository onto your directory
+
+echo -e "${YELLOW} Downloading compose.yaml ${NOCOLOR}"
+
+curl -LO https://raw.githubusercontent.com/karunjosy/CephBox/refs/heads/main/ente_with_ceph/compose.yaml
+
+mkdir -p scripts/compose
+cd scripts/compose
+
+echo -e "${YELLOW} Modifying credentials.yaml ${NOCOLOR}"
+
+curl -LO https://raw.githubusercontent.com/karunjosy/CephBox/refs/heads/main/ente_with_ceph/credentials.yaml
+file_path=~/ente/scripts/compose/credentials.yaml
+
+sed -i "s/ACCESS_KEY/${ACCESS_KEY/}/g" "$file_path"
+sed -i "s/SECRET_KEY/${SECRET_KEY}/g" "$file_path"
+sed -i "s/BUCKET_NAME/${BUCKET_NAME}/g" "$file_path"
+sed -i "s/ENDPOINT/${ENDPOINT}/g" "$file_path"
+cd ../..
+
+# Install docker and docker-compose if not present
+
+echo -e "${YELLOW} Installing docker and docker-compose ${NOCOLOR}"
+apt install docker.io -y
+curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+
+# docker engine install
+apt install -y ca-certificates curl gnupg
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+chmod a+r /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt update -y
+apt install -y  docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+docker version
+
+#cd ~/ente
+#nohup docker-compose up &
+
+echo -e "${CYAN} Goto 'ente' directory and run 'docker-compose up' to initialize Ente Museum server${NOCOLOR}"
+}
+
 # Purge the ceph cluster from this node
 function cephpurgenode() {
   echo -e "\n${GREEN}You have selected the option for puring the ceph in this node..${NOCOLOR}"
@@ -193,7 +248,7 @@ function cephpurgenode() {
   read condition1
     case $condition1 in
          [yY][Ee][Ss])
-           cephadm shell -- ceph mgr module disable cephadm 
+           cephadm shell -- ceph mgr module disable cephadm
            cephadm rm-cluster --force --zap-osds --fsid $ceph_fsid
            echo -e "\n${GREEN}Purging completed...Check manually..${NOCOLOR}"
          ;;
@@ -306,13 +361,14 @@ case "$1" in
       rgwUser
       gets3User ;;
   enteapp)
-     echo -e "\n${GREEN}This feature is not available at this stage, the feature enhancement Work in progress to integrate with enteapp..${NOCOLOR}";;
+   enteapp_install ;;
+# echo -e "\n${GREEN}This feature is not available at this stage, the feature enhancement Work in progress to integrate with enteapp..${NOCOLOR}";;
   purge)
      cephpurgenode ;;
   diskcheck)
      echo -e "\n${GREEN}Executing the precheck..${NOCOLOR}"
      echo -e "\n${GREEN}Checking for free disk..${NOCOLOR}"
-     freeavailabledisk 
+     freeavailabledisk
           ;;
   *)
      echo -e "\n${GREEN}The avaliable options are: \n   ${YELLOW}bash install.sh${NOCOLOR} - Run the script without any argument is for default ceph installation without rgw/s3.\n   ${YELLOW}"rgw"${NOCOLOR} - This argument is to deploy rgw/s3 on this machine.\n   ${YELLOW}"enteapp"${NOCOLOR} - This argument is to integrate with ente app.\n   ${YELLOW}"purge"${NOCOLOR} - This argument is to purge/delete the cluster.\n   ${YELLOW}"staticip"${NOCOLOR} - This argument is to set the static ip address to the machine.\n   ${YELLOW}"diskcheck"${NOCOLOR} - This argument is to check whether any free disks(without partition or filesystem) are available on this machine." ;;
