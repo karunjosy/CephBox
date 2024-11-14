@@ -1,6 +1,17 @@
-#### Single node CephDrive
+# Intro
 
-- **Prerequesites**:
+Linux, if you think about it, is one of the most complex engineering software system in the world. And we have thousands of Linux admins to manage linux environments. However, we have billions of people using Android phone every minute of their life without knowing what happens in the background. In regards to the installation and management of CephBox, our philosophy is the same. Ceph is a complex distributed storage system. But the end user doesn't need to know that!
+
+CephBox in it's actuality should behave as a Storage appliance. You buy it, connect to the power, and start using it. But that's a long way to go...
+
+In the meantime, if anyone wants to try this on their machine, be it may Raspberry Pi or a full fledged Server, you can follow the doc [here](https://karunjosy.github.io/docs/category/DIY)
+
+We are in the process of automating the installation of different components as much as possible. You will find some bach scripts in this folder to help with that.
+
+
+## Single node installation
+
+**Prerequesites**:
   
   a. Repository for backend debian_version: 12.7
   
@@ -10,7 +21,7 @@
   
   d. Root access.
 
-- **Steps**:
+**Steps**:
  
   i. Login as root user and clone repository using the command `git clone https://github.com/karunjosy/CephDrive.git` to the home directory of the `root` user - `/root`.
   
@@ -19,7 +30,7 @@
   iii. Run the command - `bash install.sh` to setup basic ceph enviroment without s3 endpoint.
   iv.  Run the command - `bash install.sh rgw` to setup the rgw/s3 enviroment.
 
-- **Customization**
+**Customization**
 
 The below variables can be customize from the script based on the needs:
 ~~~
@@ -37,7 +48,7 @@ dashboard_user=admin
 dashboard_password=admin
 ~~~
 
-- Additional options whithin the script
+Additional options within the script
 ~~~
 # bash install.sh --help
 
