@@ -36,6 +36,8 @@ We are in the process of automating the installation of different components as 
 From the terminal run:
   ```
   curl -sSL https://raw.githubusercontent.com/karunjosy/CephBox/refs/heads/main/Install/install.sh| bash
+  Or to deploy RGW
+  bash <(curl -sSL https://raw.githubusercontent.com/karunjosy/CephBox/refs/heads/main/scripts/install.sh) rgw
   ```
 
 **Customization**
