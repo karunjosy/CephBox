@@ -1,0 +1,33 @@
+<?php
+$CONFIG = array (
+  'datadirectory' => '/data',
+  'instanceid' => 'ocgahkqzto5h',
+  'passwordsalt' => 'XO7GaA8TOLcbnkkGXmarYkSic3Z3FV',
+  'secret' => 'waFOtFVwoCgGGz3zS6evz/LTYQMrCYdr8eEdO6Wf6s1RSSQg',
+  'trusted_domains' =>
+  array (
+    0 => 'rpi1.local:5443',
+  ),
+  'dbtype' => 'sqlite3',
+  'version' => '30.0.2.2',
+  'overwrite.cli.url' => 'https://rpi1.local:5443',
+  'installed' => true,
+  'objectstore' =>
+  array (
+    'class' => '\\OC\\Files\\ObjectStore\\S3',
+    'arguments' =>
+    array (
+      'bucket' => 'nextcloud-test',
+      'hostname' => '192.168.0.11',
+      'key' => 'redhat',
+      'secret' => '56hhj8gc',
+      'port' => 80,
+      'use_ssl' => false,
+      'use_path_style' => true,
+    ),
+  ),
+  'memcache.local' => '\\OC\\Memcache\\APCu',
+  'filelocking.enabled' => true,
+  'memcache.locking' => '\\OC\\Memcache\\APCu',
+  'upgrade.disable-web' => true,
+);
