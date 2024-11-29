@@ -1,0 +1,54 @@
+services:
+  museum:
+    image: ghcr.io/ente-io/server
+    ports:
+      - 8080:8080 # API
+      - 2112:2112 # Prometheus metrics
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Pass-in the config to connect to the DB and MinIO
+      ENTE_CREDENTIALS_FILE: /credentials.yaml
+    volumes:
+      - custom-logs:/var/logs
+      - ./museum.yaml:/museum.yaml:ro
+      - ./scripts/compose/credentials.yaml:/credentials.yaml:ro
+      - ./data:/data:ro
+    networks:
+      - internal
+
+  postgres:
+    image: postgres:15
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: pguser # change as required
+      POSTGRES_PASSWORD: pgpass # chage as requierd
+      POSTGRES_DB: ente_db
+    # Wait for postgres to be accept connections before starting museum.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-q",
+          "-d",
+          "ente_db",
+          "-U",
+          "pguser"
+        ]
+      start_period: 40s
+      start_interval: 1s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal
+volumes:
+  custom-logs:
+  postgres-data:
+  
+
+
+networks:
+  internal:

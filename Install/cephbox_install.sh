@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# This script is to deploy s3 compatable rgw
-# usage "bash install.sh"
+# This script is to deploy
+# - Ceph cluster (single node and multi-node)
+# - s3 compatible RGW
+# - Ente Photo server
+#
+# usage "bash cephbox-install.sh"
 
 # Tested version details:
 #   - debian 12.7
@@ -37,8 +41,10 @@ rgw_user=s3user
 dashboard_user=admin
 dashboard_password=admin
 
-### Define functions
-# Adding condition to check whether the cluster is already installed or not
+### Define precheck and pre-requisities functions
+###
+
+# 1. Adding condition to check whether the cluster is already installed or not
 function cephalreadythere() {
     ceph_fsid=$(cephadm shell -- ceph fsid 2> /dev/null)
     if [ "$?" -eq 0 ]; then
@@ -48,7 +54,7 @@ function cephalreadythere() {
     fi
 }
 
-# Adding condition whether any free disks are available or not
+# 2. Adding condition whether any free disks are available or not
 function freeavailabledisk() {
   free_disks=()
   for disk in $(lsblk -dn -o NAME,TYPE | awk '$2 == "disk" {print $1}'); do
@@ -67,15 +73,15 @@ function freeavailabledisk() {
   fi
 }
 
-# debin prerequsites
-function debin_prerequsites() {
+# 3. debian prerequsites
+function debian_prerequsites() {
   echo -e "${GREEN}Installing podman, lvm2, chrony...${NOCOLOR}\n"
   sudo apt update
   sudo apt install -y lvm2 podman chrony sudo curl
 }
 
-# debin package update
-function debin_update() {
+# 4. debian package update
+function debian_update() {
   echo -e "${GREEN}Updating package lists...${NOCOLOR}\n"
   sudo apt update
   echo -e "${GREEN}Upgrading packages...${NOCOLOR}\n"
@@ -88,8 +94,11 @@ function debin_update() {
   echo -e "${GREEN}System update completed...${NOCOLOR}\n"
 }
 
-# debin cephadm binary setting
-function debin_cephadm() {
+### Cephadm installation
+###
+
+# debian cephadm binary setting
+function debian_cephadm() {
   echo -e "${GREEN}configuring cephadm...${NOCOLOR}\n"
   cd /sbin/ && curl -# --remote-name --location "${cephadm_location}"
   chmod +x /sbin/cephadm
@@ -98,42 +107,83 @@ function debin_cephadm() {
   source ~/.bashrc
 }
 
-# debin install ceph using cephadm 
-function singleHostDeployment() {
-  echo -e "${GREEN}cephadm deployment is going on...${NOCOLOR}\n"
+# install ceph cluster using cephadm
+
+function multi_node_deployment() {
+  echo -e "${CYAN}\n\nInstalling Ceph Cluster...🛠️  ${NOCOLOR}\n"
+  echo -e "${GREEN}Pulling  ${container_image} ${NOCOLOR}"
   podman pull "${container_image}"
   date_var1=`date "+%Y-%m-%d-%T"`
-  cephadm --image "${container_image}" bootstrap --mon-ip "${get_pvt_ipaddress}" --initial-dashboard-user "${dashboard_user}" --initial-dashboard-password "${dashboard_password}" --single-host-defaults | tee /root/ceph_install.out-${date_var1}
+  cephadm --image "${container_image}" bootstrap --mon-ip "${get_pvt_ipaddress}" --initial-dashboard-user "${dashboard_user}" --initial-dashboard-password "${dashboard_password}" | tee /root/ceph_install.out-${date_var1}
   cephadm shell -- ceph status
-  echo -e "${GREEN}Started OSD deployment, it may take some time...${NOCOLOR}\n"
+  echo -e "${CYAN}Found free disk 💾
+Starting OSD deployment. Please wait... ⏳${NOCOLOR}\n"
   sleep 30
   cephadm shell -- ceph orch apply osd --all-available-devices
   sleep 30
   cephadm shell -- ceph config set mgr mgr/cephadm/container_image_grafana "${grafana_image}"
   sleep 5
   cephadm shell -- ceph mgr fail
-  echo -e "${GREEN}Checking the running OSD services...${NOCOLOR}\n"
+  echo -e "${GREEN}Verifying OSD is up and running...${NOCOLOR}\n"
   cephadm shell -- ceph orch ps --daemon_type osd
-  echo -e "${GREEN}Setting some additional parameters...${NOCOLOR}\n"
-  cephadm shell -- ceph config set global mon_allow_pool_delete true
-  cephadm shell -- ceph config set global osd_pool_default_min_size 1
-  cephadm shell -- ceph config set global osd_pool_default_size 1
-  echo -e "${GREEN}Deployment got completed...please review the below: ${NOCOLOR}\n"
+  echo -e "${CYAN}\n\nCeph cluster successfully deployed 🐙🐙🐙 🚀🚀🚀 ${NOCOLOR}\n"
   cephadm shell -- ceph mgr fail
   cephadm shell -- ceph -s
   cephadm shell -- ceph orch ls
   date_var2=`date "+%Y-%m-%d-%T"`
   echo "Ceph Manager dashboard details: " > /root/ceph_mgr_install.out-${date_var2}
   cephadm shell -- ceph mgr services >> /root/ceph_mgr_install.out-${date_var2}
-  echo "-------------------------------------" >> /root/ceph_mgr_install.out-${date_var2}
-  echo "Ceph Dashboard user details: " >> /root/ceph_mgr_install.out-${date_var2}
-  echo "User: $dashboard_user" >> /root/ceph_mgr_install.out-${date_var2}
-  echo "Credential: $dashboard_password" >> /root/ceph_mgr_install.out-${date_var2}
-  echo "-------------------------------------" >> /root/ceph_mgr_install.out-${date_var2}
+  echo -e "${CYAN}\n\n-------------------------------------"
+  echo -e "Ceph Dashboard details: \n"
+  echo -e "       URL: https://$(hostname):8443 "
+  echo -e "      User: $dashboard_user"
+  echo -e "  Password: $dashboard_password"
+  echo -e "-------------------------------------${NOCOLOR}"
   echo "Ceph Initial Status: " >> /root/ceph_mgr_install.out-${date_var2}
   cephadm shell -- ceph -s >> /root/ceph_mgr_install.out-${date_var2}
   cephadm shell -- ceph orch host ls >> /root/ceph_mgr_install.out-${date_var2}
-  echo "-------------------------------------" >> /root/ceph_mgr_install.out-${date_var2}
+   echo "-------------------------------------" >> /root/ceph_mgr_install.out-${date_var2}
+
+}
+
+function single_node_deployment() {
+  echo -e "${CYAN}\n\nInstalling Ceph Cluster...🛠️  ${NOCOLOR}\n"
+  echo -e "${GREEN}Pulling  ${container_image} ${NOCOLOR}"
+  podman pull "${container_image}"
+  date_var1=`date "+%Y-%m-%d-%T"`
+  cephadm --image "${container_image}" bootstrap --mon-ip "${get_pvt_ipaddress}" --initial-dashboard-user "${dashboard_user}" --initial-dashboard-password "${dashboard_password}" --single-host-defaults | tee /root/ceph_install.out-${date_var1}
+  cephadm shell -- ceph status
+  echo -e "${CYAN}Found free disk 💾
+Starting OSD deployment. Please wait... ⏳${NOCOLOR}\n"
+  sleep 30
+  cephadm shell -- ceph orch apply osd --all-available-devices
+  sleep 30
+  cephadm shell -- ceph config set mgr mgr/cephadm/container_image_grafana "${grafana_image}"
+  sleep 5
+  cephadm shell -- ceph mgr fail
+  echo -e "${GREEN}Verifying OSD is up and running...${NOCOLOR}\n"
+  cephadm shell -- ceph orch ps --daemon_type osd
+  echo -e "${GREEN}Overriding default configurations to allow single node ceph cluster setup...${NOCOLOR}\n"
+  cephadm shell -- ceph config set global mon_allow_pool_delete true
+  cephadm shell -- ceph config set global osd_pool_default_min_size 1
+  cephadm shell -- ceph config set global osd_pool_default_size 1
+  echo -e "${CYAN}\n\nCeph cluster successfully deployed 🐙🐙🐙 🚀🚀🚀 ${NOCOLOR}\n"
+  cephadm shell -- ceph mgr fail
+  cephadm shell -- ceph -s
+  cephadm shell -- ceph orch ls
+  date_var2=`date "+%Y-%m-%d-%T"`
+  echo "Ceph Manager dashboard details: " > /root/ceph_mgr_install.out-${date_var2}
+  cephadm shell -- ceph mgr services >> /root/ceph_mgr_install.out-${date_var2}
+  echo -e "${CYAN}\n\n-------------------------------------"
+  echo -e "Ceph Dashboard details: \n"
+  echo -e "       URL: https://$(hostname):8443 "
+  echo -e "      User: $dashboard_user"
+  echo -e "  Password: $dashboard_password"
+  echo -e "-------------------------------------${NOCOLOR}"
+#  echo "Ceph Initial Status: " >> /root/ceph_mgr_install.out-${date_var2}
+#  cephadm shell -- ceph -s >> /root/ceph_mgr_install.out-${date_var2}
+#  cephadm shell -- ceph orch host ls >> /root/ceph_mgr_install.out-${date_var2}
+#   echo "-------------------------------------" >> /root/ceph_mgr_install.out-${date_var2}
 }
 
 # Pre-requesites for rgw - realm/zonegroup/zone..etc
@@ -179,6 +229,62 @@ function gets3User() {
 #  s3cmd mb s3:///homebucket
 }
 
+function enteapp_install() {
+# Create directory
+
+read -p 'Enter RGW bucket name:' BUCKET_NAME
+read -p 'Enter Access Key:' ACCESS_KEY
+read -p 'Enter Secret Key:'  SECRET_KEY
+read -p 'Enter RGW Endpoint with  port (IP:Port) :' ENDPOINT
+
+echo -e "\n${YELLOW} Creating directory 'ente' ${NOCOLOR}"
+mkdir ente && cd ente
+
+# Copy the starter compose.yaml and its support files from the repository onto your directory
+
+echo -e "\n${YELLOW} Downloading compose.yaml ${NOCOLOR}"
+
+curl -LO https://raw.githubusercontent.com/karunjosy/CephBox/refs/heads/main/ente_with_ceph/compose.yaml
+
+mkdir -p scripts/compose
+cd scripts/compose
+
+echo -e "\n${YELLOW} Modifying credentials.yaml ${NOCOLOR}"
+
+curl -LO https://raw.githubusercontent.com/karunjosy/CephBox/refs/heads/main/ente_with_ceph/credentials.yaml
+file_path=~/ente/scripts/compose/credentials.yaml
+
+sed -i "s/ACCESS_KEY/${ACCESS_KEY/}/g" "$file_path"
+sed -i "s/SECRET_KEY/${SECRET_KEY}/g" "$file_path"
+sed -i "s/BUCKET_NAME/${BUCKET_NAME}/g" "$file_path"
+sed -i "s/ENDPOINT/${ENDPOINT}/g" "$file_path"
+cd ../..
+
+# Install docker and docker-compose if not present
+
+echo -e "\n${YELLOW} Installing docker and docker-compose ${NOCOLOR}"
+apt install docker.io -y
+curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+
+# docker engine install
+apt install -y ca-certificates curl gnupg
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+chmod a+r /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt update -y
+apt install -y  docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+docker version
+
+#cd ~/ente
+#nohup docker-compose up &
+
+echo -e "\n${CYAN}Prerequisites completed.
+\nGoto 'ente' directory and run 'docker-compose up -d' to initialize Ente Museum server${NOCOLOR} 🚀🚀🚀 "
+}
+
 # Purge the ceph cluster from this node
 function cephpurgenode() {
   echo -e "\n${GREEN}You have selected the option for puring the ceph in this node..${NOCOLOR}"
@@ -193,7 +299,7 @@ function cephpurgenode() {
   read condition1
     case $condition1 in
          [yY][Ee][Ss])
-           cephadm shell -- ceph mgr module disable cephadm 
+           cephadm shell -- ceph mgr module disable cephadm
            cephadm rm-cluster --force --zap-osds --fsid $ceph_fsid
            echo -e "\n${GREEN}Purging completed...Check manually..${NOCOLOR}"
          ;;
@@ -246,22 +352,22 @@ function staticipset() {
    # Configure the network interface
    > /etc/network/interfaces
 cat <<EOF >> /etc/network/interfaces
-# This file describes the network interfaces available on your system
-# and how to activate them. For more information, see interfaces(5).
+  # This file describes the network interfaces available on your system
+  # and how to activate them. For more information, see interfaces(5).
 
-source /etc/network/interfaces.d/*
-
-# The loopback network interface
-auto lo
-
-# The primary network interface
-iface lo inet loopback
-auto $INTERFACE
-iface $INTERFACE inet static
-address $IP_ADDRESS
-netmask $NETMASK
-gateway $GATEWAY
-dns-nameservers $DNS1 $DNS2
+      source /etc/network/interfaces.d/*
+    
+    # The loopback network interface
+    auto lo
+    
+    # The primary network interface
+    iface lo inet loopback
+    auto $INTERFACE
+    iface $INTERFACE inet static
+    address $IP_ADDRESS
+    netmask $NETMASK
+    gateway $GATEWAY
+    dns-nameservers $DNS1 $DNS2
 EOF
 
    # Restart the networking service to apply changes
@@ -281,41 +387,65 @@ EOF
    esac
 }
 
-if [[ $# -eq 0 ]] ; then
-  echo -e "\n${GREEN}Entering to the default installation mode...${NOCOLOR}"
+if [ $# -eq 0 ] || [[ "$1" == "--multi-node-deployment" ]]; then
+  echo -e "\n${GREEN}Entering to the default multi-node installation mode...${NOCOLOR}"
   freeavailabledisk || exit 1
   cephalreadythere  || exit 1
   if [ -f /etc/debian_version ]
   then
       echo -e "\n${GREEN}Proceeding for ceph initial deployment for debian${NOCOLOR}\n"
-      debin_prerequsites
-      debin_update
-      debin_cephadm
-      singleHostDeployment
+      debian_prerequsites
+      debian_update
+      debian_cephadm
+      multi_node_deployment
   else
-    echo -e "${RED}This script is designied for debian based distributions\nSince this machine is not a Debian-based distribution, Dropping the script from the further execution...${NOCOLOR}\n" 1>&2 exit 1
+    echo -e "${RED}This script is designied for debian based distributions\nSince this machine is not a Debian-based distribution, exiting from  further execution${NOCOLOR}\n" 1>&2 exit 1
   fi
 else
 case "$1" in
   staticip)
   staticipset ;;
-  rgw)
+ --single-node-deployment)
+  echo -e "\n${GREEN}Starting single-node installation mode...${NOCOLOR}"
+  freeavailabledisk || exit 1
+  cephalreadythere  || exit 1
+#  if [ -f /etc/debian_version ]
+#  then
+      echo -e "\n${GREEN}Proceeding for ceph initial deployment for debian${NOCOLOR}\n"
+      debian_prerequsites
+      debian_update
+      debian_cephadm
+      single_node_deployment
+#  else
+#    echo -e "${RED}This script is designed for debian based distributions\nSince this machine is not a Debian-based distribution, exiting from  further execution${NOCOLOR>
+#  fi
+ ;;
+  --setup-rgw)
      echo -e "\n${GREEN}Deploying RGW/S3 on this node..${NOCOLOR}"
       rgwPrerequsites
       rgwDeployment
       rgwUser
       gets3User ;;
-  enteapp)
-     echo -e "\n${GREEN}This feature is not available at this stage, the feature enhancement Work in progress to integrate with enteapp..${NOCOLOR}";;
-  purge)
+  --install-ente-photos)
+   enteapp_install ;;
+# echo -e "\n${GREEN}This feature is not available at this stage, the feature enhancement Work in progress to integrate with enteapp..${NOCOLOR}";;
+  --purge)
      cephpurgenode ;;
-  diskcheck)
+  --disk-check)
      echo -e "\n${GREEN}Executing the precheck..${NOCOLOR}"
      echo -e "\n${GREEN}Checking for free disk..${NOCOLOR}"
-     freeavailabledisk 
+     freeavailabledisk
           ;;
   *)
-     echo -e "\n${GREEN}The avaliable options are: \n   ${YELLOW}bash install.sh${NOCOLOR} - Run the script without any argument is for default ceph installation without rgw/s3.\n   ${YELLOW}"rgw"${NOCOLOR} - This argument is to deploy rgw/s3 on this machine.\n   ${YELLOW}"enteapp"${NOCOLOR} - This argument is to integrate with ente app.\n   ${YELLOW}"purge"${NOCOLOR} - This argument is to purge/delete the cluster.\n   ${YELLOW}"staticip"${NOCOLOR} - This argument is to set the static ip address to the machine.\n   ${YELLOW}"diskcheck"${NOCOLOR} - This argument is to check whether any free disks(without partition or filesystem) are available on this machine." ;;
+     echo -e "\nUsage: $0 --option [multi-node-deployment|single-node-deployment|install-ente-photos|setup-rgw]
+\n Options: \n
+   --multi-node-deployment${NOCOLOR}    Install multi-node Ceph cluster(default mode)
+   --single-node-deployment${NOCOLOR}   Install  single node Ceph cluster
+   --setup-rgw${NOCOLOR}                Deploy rgw/s3 on the node
+   --install-ente-photos${NOCOLOR}      Install Ente Photo app and integrate with Ceph cluster
+   --purge${NOCOLOR}                    Purge/delete the Ceph cluster
+   --staticip${NOCOLOR}                 Set  static ip address to the machine
+   --disk-check${NOCOLOR}               Check whether any free disks(without partition or filesystem) are available" ;;
 esac
 
 fi
