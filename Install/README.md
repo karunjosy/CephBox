@@ -1,4 +1,4 @@
-# Intro
+# Introduction
 
 Linux, if you think about it, is one of the most complex engineering software system in the world. And we have thousands of Linux admins to manage linux environments. However, we have billions of people using Android phone every minute of their life without knowing what happens in the background. In regards to the installation and management of CephBox, our philosophy is the same. Ceph is a complex distributed storage system. But the end user doesn't need to know that!
 
@@ -27,17 +27,17 @@ We are in the process of automating the installation of different components as 
  
   i. Login as root user and clone repository using the command `git clone https://github.com/karunjosy/CephBox.git` to the home directory of the `root` user - `/root`.
   
-  ii.  Go inside the directory `CephBox/install/`(`cd CephBox/install`) and give execute permission: `chmod +x install.sh`
+  ii.  Go inside the directory `CephBox/install/`(`cd CephBox/install`) and give execute permission: `chmod +x cephbox_install.sh`
 
-  iii. Run the command - `bash install.sh` to setup basic ceph enviroment without s3 endpoint.
-  iv.  If you wish to deploy RGW then after installation run the script again with 'rgw' switch :  `bash install.sh rgw`
+  iii. Run the command - `bash cephbox_install.sh` to setup basic ceph enviroment without s3 endpoint.
+  iv.  If you wish to deploy RGW then after installation run the script again with `--setup-rgw` switch :  `bash cephbox_install.sh --setup-rgw`
 
 *Option 2 : Downloading the script*
 From the terminal run:
   ```
-  curl -sSL https://raw.githubusercontent.com/karunjosy/CephBox/refs/heads/main/Install/install.sh| bash
+  curl -sSL https://raw.githubusercontent.com/karunjosy/CephBox/refs/heads/main/Install/cephbox_install.sh| bash
   Or to deploy RGW
-  bash <(curl -sSL https://raw.githubusercontent.com/karunjosy/CephBox/refs/heads/main/scripts/install.sh) rgw
+  bash <(curl -sSL https://raw.githubusercontent.com/karunjosy/CephBox/refs/heads/main/Install/cephbox_install.sh) --setup-rgw
   ```
 
 **Customization**
@@ -60,13 +60,17 @@ dashboard_password=admin
 
 Additional options within the script
 ~~~
-# bash install.sh --help
+# bash cephbox_install.sh --help
 
-The avaliable options are:
-   bash install.sh - Run the script without any argument is for default ceph installation without rgw/s3.
-   rgw - This argument is to deploy rgw/s3 on this machine.
-   enteapp - This argument is to integrate with ente app.
-   purge - This argument is to purge/delete the cluster.
-   staticip - This argument is to set the static ip address to the machine.
-   diskcheck - This argument is to check whether any free disks(without partition or filesystem) are available on this machine.
+Usage: cephbox_install.sh --option [multi-node-deployment|single-node-deployment|install-ente-photos|setup-rgw]
+
+ Options:
+
+   --multi-node-deployment    Install multi-node Ceph cluster(default mode)
+   --single-node-deployment   Install  single node Ceph cluster
+   --setup-rgw                Deploy rgw/s3 on the node
+   --install-ente-photos      Install Ente Photo app and integrate with Ceph cluster
+   --purge                    Purge/delete the Ceph cluster
+   --staticip                 Set  static ip address to the machine
+   --disk-check               Check whether any free disks(without partition or filesystem) are available
 ~~~

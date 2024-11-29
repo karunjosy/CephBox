@@ -351,7 +351,7 @@ function staticipset() {
    cp /etc/network/interfaces /etc/network/interfaces.bak-${date_var}
    # Configure the network interface
    > /etc/network/interfaces
-  cat <<EOF >> /etc/network/interfaces
+cat <<EOF >> /etc/network/interfaces
   # This file describes the network interfaces available on your system
   # and how to activate them. For more information, see interfaces(5).
 
@@ -368,7 +368,7 @@ function staticipset() {
     netmask $NETMASK
     gateway $GATEWAY
     dns-nameservers $DNS1 $DNS2
-    EOF
+EOF
 
    # Restart the networking service to apply changes
    systemctl restart networking
